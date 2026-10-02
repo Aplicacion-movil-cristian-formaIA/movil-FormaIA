@@ -16,13 +16,25 @@ class WelcomeScreen extends StatelessWidget {
             children: [
               const Spacer(),
               Container(
-                width: 96,
-                height: 96,
+                width: 140,
+                height: 140,
                 decoration: BoxDecoration(
-                  color: AppColors.primary,
                   borderRadius: BorderRadius.circular(32),
+                  boxShadow: [
+                    BoxShadow(
+                      color: AppColors.primary.withOpacity(0.3),
+                      blurRadius: 20,
+                      spreadRadius: 2,
+                    ),
+                  ],
                 ),
-                child: const Icon(Icons.auto_awesome, color: Colors.white, size: 44),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(32),
+                  child: Image.asset(
+                    'assets/images/logo.png',
+                    fit: BoxFit.cover,
+                  ),
+                ),
               ),
               const SizedBox(height: 20),
               const Text('FormaIA',

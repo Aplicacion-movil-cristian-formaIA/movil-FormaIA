@@ -27,4 +27,13 @@ class RutinaService {
     final rutinaId = await obtenerRutinaIdPorSolicitud(solicitudId);
     return obtener(rutinaId);
   }
+
+  Future<String?> obtenerRutinaActiva(String usuarioId) async {
+    try {
+      final json = await _api.get('/api/rutinas/activa/$usuarioId');
+      return json['rutina_id'] as String?;
+    } catch (_) {
+      return null;
+    }
+  }
 }

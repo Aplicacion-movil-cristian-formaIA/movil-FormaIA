@@ -49,10 +49,10 @@ class SolicitudService {
       final solicitud = await consultar(solicitudId);
       yield solicitud;
 
-      final terminó = solicitud.estado == EstadoSolicitud.generada ||
+      final termino = solicitud.estado == EstadoSolicitud.generada ||
           solicitud.estado == EstadoSolicitud.rechazada ||
           solicitud.estado == EstadoSolicitud.error;
-      if (terminó) return;
+      if (termino) return;
 
       if (DateTime.now().difference(inicio) > AppConfig.timeoutPolling) {
         throw ApiException(

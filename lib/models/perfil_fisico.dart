@@ -31,4 +31,16 @@ class PerfilFisico {
         'minutos_sesion': minutosSesion,
         'equipamiento': equipamiento,
       };
+
+  factory PerfilFisico.fromJson(Map<String, dynamic> json) {
+    return PerfilFisico(
+      sexo: json['sexo'] ?? '',
+      estaturaCm: (json['estatura_cm'] ?? 0).toDouble(),
+      pesoKg: (json['peso_kg'] ?? 0).toDouble(),
+      nivel: json['nivel'] ?? '',
+      diasSemana: json['dias_semana'] ?? 0,
+      minutosSesion: json['minutos_sesion'] ?? 0,
+      equipamiento: (json['equipamiento'] as List<dynamic>?)?.map((e) => e.toString()).toList() ?? [],
+    );
+  }
 }

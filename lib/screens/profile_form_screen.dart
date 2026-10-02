@@ -9,8 +9,9 @@ import '../widgets/error_banner.dart';
 import 'home_screen.dart';
 
 class ProfileFormScreen extends StatefulWidget {
-  const ProfileFormScreen({super.key, required this.usuarioId});
+  const ProfileFormScreen({super.key, required this.usuarioId, this.esEdicion = false});
   final String usuarioId;
+  final bool esEdicion;
 
   @override
   State<ProfileFormScreen> createState() => _ProfileFormScreenState();
@@ -25,10 +26,40 @@ class _ProfileFormScreenState extends State<ProfileFormScreen> {
   String _nivel = 'principiante';
   int _diasSemana = 3;
   int _minutosSesion = 30;
-  final Set<String> _equipamiento = {'sin_equipo'};
+  Set<String> _equipamiento = {'sin_equipo'};
 
   bool _cargando = false;
+  bool _cargandoDatos = false;
   String? _error;
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.esEdicion) {
+      _cargarPerfil();
+    }
+  }
+
+  Future<void> _cargarPerfil() async {
+    setState(() => _cargandoDatos = true);
+    try {
+      final p = await context.read<UsuarioService>().obtenerPerfil(widget.usuarioId);
+      if (!mounted) return;
+      setState(() {
+        _estaturaCtrl.text = p.estaturaCm.toString();
+        _pesoCtrl.text = p.pesoKg.toString();
+        _sexo = p.sexo;
+        _nivel = p.nivel;
+        _diasSemana = p.diasSemana;
+        _minutosSesion = p.minutosSesion;
+        _equipamiento = p.equipamiento.isEmpty ? {'sin_equipo'} : p.equipamiento.toSet();
+      });
+    } catch (e) {
+      // Ignore if not found
+    } finally {
+      if (mounted) setState(() => _cargandoDatos = false);
+    }
+  }
 
   @override
   void dispose() {
@@ -59,10 +90,18 @@ class _ProfileFormScreenState extends State<ProfileFormScreen> {
       await context.read<UsuarioService>().guardarPerfil(widget.usuarioId, perfil);
 
       if (!mounted) return;
-      Navigator.of(context).pushAndRemoveUntil(
-        MaterialPageRoute(builder: (_) => HomeScreen(usuarioId: widget.usuarioId)),
-        (route) => false,
-      );
+      
+      if (widget.esEdicion) {
+        Navigator.of(context).pop(); // Vuelve a Perfil/Home
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Perfil actualizado. La IA usará estos datos.')),
+        );
+      } else {
+        Navigator.of(context).pushAndRemoveUntil(
+          MaterialPageRoute(builder: (_) => HomeScreen(usuarioId: widget.usuarioId)),
+          (route) => false,
+        );
+      }
     } on ApiException catch (e) {
       setState(() => _error = e.mensaje);
     } finally {
@@ -72,6 +111,9 @@ class _ProfileFormScreenState extends State<ProfileFormScreen> {
 
   @override
   Widget build(BuildContext context) {
+    if (_cargandoDatos) {
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    }
     return Scaffold(
       appBar: AppBar(),
       body: SafeArea(

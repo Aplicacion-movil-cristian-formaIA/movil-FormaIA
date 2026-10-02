@@ -9,6 +9,7 @@ import 'screens/welcome_screen.dart';
 import 'services/rutina_service.dart';
 import 'services/solicitud_service.dart';
 import 'services/usuario_service.dart';
+import 'services/entrenamiento_service.dart';
 
 void main() {
   runApp(const FormaIAApp());
@@ -33,6 +34,9 @@ class FormaIAApp extends StatelessWidget {
         ),
         ProxyProvider<ApiClient, RutinaService>(
           update: (_, api, __) => RutinaService(api),
+        ),
+        ProxyProvider<ApiClient, EntrenamientoService>(
+          update: (_, api, __) => EntrenamientoService(api),
         ),
       ],
       child: MaterialApp(

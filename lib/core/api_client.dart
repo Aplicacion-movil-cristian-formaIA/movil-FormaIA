@@ -24,13 +24,13 @@ class ApiClient {
   final http.Client _client;
   final String _baseUrl = AppConfig.apiBaseUrl;
 
-  Future<Map<String, dynamic>> get(String path) async {
+  Future<dynamic> get(String path) async {
     return _enviar(() => _client
         .get(_uri(path), headers: _headers())
         .timeout(AppConfig.timeoutHttp));
   }
 
-  Future<Map<String, dynamic>> post(String path, Map<String, dynamic> body) async {
+  Future<dynamic> post(String path, Map<String, dynamic> body) async {
     return _enviar(() => _client
         .post(_uri(path), headers: _headers(), body: jsonEncode(body))
         .timeout(AppConfig.timeoutHttp));
@@ -43,28 +43,25 @@ class ApiClient {
         'Accept': 'application/json',
       };
 
-  Future<Map<String, dynamic>> _enviar(Future<http.Response> Function() peticion) async {
+  Future<dynamic> _enviar(Future<http.Response> Function() peticion) async {
     http.Response respuesta;
     try {
       respuesta = await peticion();
     } on TimeoutException {
       throw ApiException(
-          'El servidor no respondió a tiempo. Revisa tu conexión o que el backend esté corriendo.');
+          'El servidor tardó demasiado. Revisa tu conexión.');
     } catch (_) {
-      // SocketException u otros errores de bajo nivel: se homogenizan
-      // como error de red para que la UI muestre un mensaje consistente
-      // (ver AppConfig sobre "localhost" vs "10.0.2.2" en emuladores).
       throw ApiException(
-          'No se pudo conectar con el servidor. Verifica la URL del backend y tu conexión.');
+          'Error de conexión. Verifica que el servidor de FormaIA esté encendido.');
     }
 
-    Map<String, dynamic> cuerpo;
+    dynamic cuerpo;
     try {
       cuerpo = respuesta.body.isEmpty
           ? <String, dynamic>{}
-          : jsonDecode(respuesta.body) as Map<String, dynamic>;
+          : jsonDecode(respuesta.body);
     } catch (_) {
-      throw ApiException('El servidor devolvió una respuesta inesperada.',
+      throw ApiException('Respuesta inválida del servidor.',
           statusCode: respuesta.statusCode);
     }
 
@@ -72,7 +69,10 @@ class ApiClient {
       return cuerpo;
     }
 
-    final mensaje = cuerpo['error']?.toString() ?? 'Ocurrió un error inesperado.';
+    String mensaje = 'Ocurrió un error inesperado.';
+    if (cuerpo is Map && cuerpo.containsKey('error')) {
+      mensaje = cuerpo['error'].toString();
+    }
     throw ApiException(mensaje, statusCode: respuesta.statusCode);
   }
 }

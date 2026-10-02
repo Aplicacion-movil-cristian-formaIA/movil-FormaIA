@@ -22,7 +22,32 @@ class UsuarioService {
     return Usuario.fromJson(json);
   }
 
+  Future<Usuario> login({
+    required String email,
+    required String password,
+  }) async {
+    final json = await _api.post('/api/login', {
+      'email': email,
+      'password': password,
+    });
+    return Usuario.fromJson(json);
+  }
+
   Future<void> guardarPerfil(String usuarioId, PerfilFisico perfil) async {
     await _api.post('/api/usuarios/$usuarioId/perfil', perfil.toJson());
+  }
+
+  Future<bool> tienePerfil(String usuarioId) async {
+    try {
+      await _api.get('/api/usuarios/$usuarioId/perfil');
+      return true;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  Future<PerfilFisico> obtenerPerfil(String usuarioId) async {
+    final json = await _api.get('/api/usuarios/$usuarioId/perfil');
+    return PerfilFisico.fromJson(json);
   }
 }

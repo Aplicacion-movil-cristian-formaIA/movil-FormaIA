@@ -75,21 +75,17 @@ flutter run --dart-define=API_BASE_URL=http://192.168.1.50:8080
    pantalla del **plan** (fases con sus semanas) o, si la meta no era
    segura, en la pantalla de **meta rechazada** con el motivo.
 
-## Qué falta para producción (a propósito, fuera de este MVP)
+## Características IA Avanzadas (Implementadas en Fase 2 y 3)
 
-Sigue el mismo alcance que el backend (ver su README, sección "No
-incluidos en este MVP"):
-- **Login real / JWT:** hoy la "sesión" es solo el `usuario_id` guardado
-  con `shared_preferences` (`lib/core/session.dart`). Cuando el backend
-  agregue autenticación, ese archivo es el único que necesita cambiar
-  para guardar un token en vez de un id plano.
-- **Sesión guiada de entrenamiento, progreso/mediciones, notificaciones
-  push:** el backend todavía no expone esos endpoints (`entrenamiento`,
-  `medicion`, `recordatorio` están en el esquema SQL pero no mapeados en
-  el ORM del backend entregado). La estructura de `services/` y
-  `screens/` ya está lista para agregarlos siguiendo el mismo patrón
-  (`XxxService` + modelo + pantalla) apenas el backend los tenga.
-- **Ajustar rutina en lenguaje natural (RF-12), lesiones/equipamiento
-  persistidos (RF-13):** la pantalla de perfil ya pide equipamiento, pero
-  el backend actual no guarda `limitacion` (lesiones); queda como
-  siguiente paso natural en `UsuarioController.hpp`.
+- **Modo Entrenamiento guiado (RF-16):** Interfaz para rastrear series, pesos y repeticiones.
+- **Autorregulación (RPE) (RF-27):** Al terminar la sesión, calificas el esfuerzo percibido (1-10) que el backend usará para iterar la dificultad.
+- **Adaptación en Vivo (Varita Mágica) (RF-28):** Sustitución de un solo ejercicio o de toda la sesión (por falta de tiempo, equipo, etc.) comunicándose con la IA en tiempo real para generar alternativas.
+- **Tracking 1RM (Sobrecarga) (RF-29):** La app detecta si rompiste tu récord personal de levantamiento basándose en las fórmulas de Brzycki y te lo notifica instantáneamente al finalizar la rutina.
+
+## Qué falta para Fase de Producción (Fuera del MVP)
+
+Sigue el mismo alcance que el backend (ver su README, sección "No incluidos"):
+- **Login real / JWT:** hoy la "sesión" es solo el `usuario_id` guardado con `shared_preferences` (`lib/core/session.dart`).
+- **Gráficas de progreso:** La vista del porcentaje de acercamiento al arquetipo o evolución del peso en gráficos de líneas aún no está renderizada.
+- **Notificaciones Push:** Falta integrar Firebase Cloud Messaging para que lleguen recordatorios de entrenamiento.
+- **Panel Administrativo:** Portal web para curar ejercicios.

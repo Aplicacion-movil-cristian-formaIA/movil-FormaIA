@@ -3,9 +3,12 @@ import 'package:provider/provider.dart';
 
 import '../core/api_exception.dart';
 import '../core/session.dart';
+import '../models/usuario.dart';
 import '../services/usuario_service.dart';
+import '../services/rutina_service.dart';
 import '../widgets/app_button.dart';
 import '../widgets/error_banner.dart';
+import 'home_screen.dart';
 import 'profile_form_screen.dart';
 
 class RegisterScreen extends StatefulWidget {
@@ -23,6 +26,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   bool _cargando = false;
   String? _error;
+  bool _esLogin = false; // Toggle entre Registro y Login
 
   @override
   void dispose() {
@@ -43,9 +47,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
     if (elegida != null) setState(() => _fechaNacimiento = elegida);
   }
 
-  Future<void> _registrar() async {
+  Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
-    if (_fechaNacimiento == null) {
+    if (!_esLogin && _fechaNacimiento == null) {
       setState(() => _error = 'Selecciona tu fecha de nacimiento.');
       return;
     }
@@ -57,22 +61,49 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
     try {
       final usuarioService = context.read<UsuarioService>();
-      // El backend espera fecha_nacimiento en formato YYYY-MM-DD (ver
-      // UsuarioController.hpp: se cifra tal cual antes de guardarla).
-      final fechaFormateada =
-          '${_fechaNacimiento!.year.toString().padLeft(4, '0')}-'
-          '${_fechaNacimiento!.month.toString().padLeft(2, '0')}-'
-          '${_fechaNacimiento!.day.toString().padLeft(2, '0')}';
+      
+      Usuario usuario;
+      if (_esLogin) {
+        usuario = await usuarioService.login(
+          email: _emailCtrl.text.trim(),
+          password: _passwordCtrl.text,
+        );
+      } else {
+        final fechaFormateada =
+            '${_fechaNacimiento!.year.toString().padLeft(4, '0')}-'
+            '${_fechaNacimiento!.month.toString().padLeft(2, '0')}-'
+            '${_fechaNacimiento!.day.toString().padLeft(2, '0')}';
 
-      final usuario = await usuarioService.registrar(
-        email: _emailCtrl.text.trim(),
-        password: _passwordCtrl.text,
-        fechaNacimiento: fechaFormateada,
-      );
+        usuario = await usuarioService.registrar(
+          email: _emailCtrl.text.trim(),
+          password: _passwordCtrl.text,
+          fechaNacimiento: fechaFormateada,
+        );
+      }
 
       await Session.instance.guardarUsuarioId(usuario.id);
 
       if (!mounted) return;
+
+      // Navegación inteligente basada en el estado del usuario
+      if (_esLogin) {
+        final tienePerfil = await usuarioService.tienePerfil(usuario.id);
+        if (tienePerfil) {
+          final rutinaService = context.read<RutinaService>();
+          final rutinaActivaId = await rutinaService.obtenerRutinaActiva(usuario.id);
+          
+          if (rutinaActivaId != null) {
+            await Session.instance.guardarRutinaId(rutinaActivaId);
+          }
+          
+          if (!mounted) return;
+          Navigator.of(context).pushReplacement(
+            MaterialPageRoute(builder: (_) => HomeScreen(usuarioId: usuario.id)),
+          );
+          return;
+        }
+      }
+
       Navigator.of(context).pushReplacement(
         MaterialPageRoute(builder: (_) => ProfileFormScreen(usuarioId: usuario.id)),
       );
@@ -95,10 +126,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text('Crea tu cuenta',
-                    style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold)),
+                Text(_esLogin ? 'Iniciar Sesión' : 'Crea tu cuenta',
+                    style: const TextStyle(fontSize: 28, fontWeight: FontWeight.bold)),
                 const SizedBox(height: 8),
-                const Text('Empieza tu plan personalizado en menos de 3 minutos.'),
+                Text(_esLogin 
+                  ? 'Bienvenido de vuelta.' 
+                  : 'Empieza tu plan personalizado en menos de 3 minutos.'),
                 const SizedBox(height: 24),
                 TextFormField(
                   controller: _emailCtrl,
@@ -120,23 +153,36 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   },
                 ),
                 const SizedBox(height: 16),
-                InkWell(
-                  onTap: _elegirFecha,
-                  child: InputDecorator(
-                    decoration: const InputDecoration(labelText: 'Fecha de nacimiento'),
-                    child: Text(
-                      _fechaNacimiento == null
-                          ? 'Selecciona una fecha'
-                          : '${_fechaNacimiento!.day}/${_fechaNacimiento!.month}/${_fechaNacimiento!.year}',
+                if (!_esLogin)
+                  InkWell(
+                    onTap: _elegirFecha,
+                    child: InputDecorator(
+                      decoration: const InputDecoration(labelText: 'Fecha de nacimiento'),
+                      child: Text(
+                        _fechaNacimiento == null
+                            ? 'Selecciona una fecha'
+                            : '${_fechaNacimiento!.day}/${_fechaNacimiento!.month}/${_fechaNacimiento!.year}',
+                      ),
                     ),
                   ),
-                ),
                 const SizedBox(height: 20),
                 if (_error != null) ...[
                   ErrorBanner(mensaje: _error!),
                   const SizedBox(height: 16),
                 ],
-                AppButton(texto: 'Continuar', cargando: _cargando, onPressed: _registrar),
+                AppButton(texto: 'Continuar', cargando: _cargando, onPressed: _submit),
+                const SizedBox(height: 16),
+                Center(
+                  child: TextButton(
+                    onPressed: () => setState(() {
+                      _esLogin = !_esLogin;
+                      _error = null;
+                    }),
+                    child: Text(_esLogin 
+                      ? '¿No tienes cuenta? Regístrate aquí' 
+                      : '¿Ya tienes cuenta? Inicia sesión'),
+                  ),
+                ),
                 const SizedBox(height: 32),
               ],
             ),

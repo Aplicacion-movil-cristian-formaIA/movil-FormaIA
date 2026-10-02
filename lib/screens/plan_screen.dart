@@ -6,6 +6,7 @@ import '../core/app_theme.dart';
 import '../models/rutina.dart';
 import '../services/rutina_service.dart';
 import '../widgets/error_banner.dart';
+import 'modo_entrenamiento_screen.dart';
 
 class PlanScreen extends StatefulWidget {
   const PlanScreen({super.key, required this.rutinaId});
@@ -62,6 +63,21 @@ class _PlanScreenState extends State<PlanScreen> {
                     style: const TextStyle(color: AppColors.muted)),
                 const SizedBox(height: 24),
                 for (final fase in rutina.fases) _FaseCard(fase: fase),
+                const SizedBox(height: 32),
+                SizedBox(
+                  width: double.infinity,
+                  child: FilledButton(
+                    onPressed: () {
+                      Navigator.push(context, MaterialPageRoute(builder: (_) => const ModoEntrenamientoScreen()));
+                    },
+                    style: FilledButton.styleFrom(
+                      backgroundColor: AppColors.mint,
+                      foregroundColor: Colors.black,
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                    ),
+                    child: const Text('¡COMENZAR ENTRENAMIENTO!', style: TextStyle(fontWeight: FontWeight.bold)),
+                  ),
+                ),
               ],
             );
           },
